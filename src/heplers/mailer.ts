@@ -2,24 +2,32 @@ import nodemailer from "nodemailer";
 import User from "@/models/userModel";
 import bcrypt from "bcryptjs";
 
-export const sendEmail = async ({ email, emailType, userId }: any) => {
+type EmailType = "VERIFY" | "RESET";
+
+interface SendEmailProps {
+  email: string;
+  emailType: EmailType;
+  userId: string;
+}
+
+export const sendEmail = async ({ email, emailType, userId }: SendEmailProps) => {
   try {
     const hashedToken = await bcrypt.hash(userId.toString(), 10);
 
-    if (emailType === "VERIFY") {
-      await User.findByIdAndUpdate(userId, {
-        verifyToken: hashedToken,
-        verifyTokenExpiry: Date.now() + 3600000,
-      });
-    } else if (emailType === "RESET") {
-      await User.findByIdAndUpdate(userId, {
-        forgotPasswordToken: hashedToken,
-        forgotPasswordTokenExpiry: Date.now() + 3600000,
-      });
-    }
+    const updateFields =
+      emailType === "VERIFY"
+        ? {
+            verifyToken: hashedToken,
+            verifyTokenExpiry: Date.now() + 3600000,
+          }
+        : {
+            forgotPasswordToken: hashedToken,
+            forgotPasswordTokenExpiry: Date.now() + 3600000,
+          };
 
-    // Looking to send emails in production? Check out our Email API/SMTP product!
-    var transport = nodemailer.createTransport({
+    await User.findByIdAndUpdate(userId, updateFields);
+
+    const transport = nodemailer.createTransport({
       host: "sandbox.smtp.mailtrap.io",
       port: 2525,
       auth: {
@@ -28,26 +36,24 @@ export const sendEmail = async ({ email, emailType, userId }: any) => {
       },
     });
 
+    const link = `${process.env.DOMAIN}/verifyemail?token=${hashedToken}`;
+
     const mailOptions = {
       from: "sumantghume12@gmail.com",
       to: email,
-      subject:
-        emailType === "VERIFY" ? "Verify your email" : "Reset your password",
-      html: `<p>Click <a href="${
-        process.env.DOMAIN
-      }/verifyemail?token=${hashedToken}">here</a> to ${
+      subject: emailType === "VERIFY" ? "Verify your email" : "Reset your password",
+      html: `<p>Click <a href="${link}">here</a> to ${
         emailType === "VERIFY" ? "verify your email" : "reset your password"
-      }
-            or copy and paste the link below in your browser. <br> ${
-              process.env.DOMAIN
-            }/verifyemail?token=${hashedToken}
-            </p>`,
+      } or copy and paste the link below in your browser:<br> ${link}</p>`,
     };
 
-    const mailresponse = await transport.sendMail(mailOptions);
-    return mailresponse;
-  } catch (error: any) {
-    console.log("Error: ", error.message);
-    throw new Error(error.message);
+    const mailResponse = await transport.sendMail(mailOptions);
+    return mailResponse;
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Email sending error:", error.message);
+      throw new Error(error.message);
+    }
+    throw new Error("Unknown error while sending email");
   }
 };
