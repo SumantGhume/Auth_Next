@@ -2,15 +2,12 @@
 
 import Link from "next/link";
 import React, { useEffect } from "react";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-
-
 export default function SignUpPage() {
-
-    const router = useRouter()
+  const router = useRouter();
 
   const [user, setUser] = React.useState({
     email: "",
@@ -18,35 +15,40 @@ export default function SignUpPage() {
     username: "",
   });
 
-  const [buttonDisabled,setButtonDisabled] = React.useState(false)
+  const [buttonDisabled, setButtonDisabled] = React.useState(false);
 
-  const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(false);
 
   const onSignup = async () => {
     try {
-      setLoading(true)
-      const response = await axios.post("/api/users/signup",user)
+      setLoading(true);
+      const response = await axios.post("/api/users/signup", user);
       console.log("Signup Success : ", response.data);
       router.push("/login");
-
-      
-    } catch (error:any) {
-      console.log("Error : ", error.message)
-      toast.error(error.message)
-      
-    }finally{
-      setLoading(false)
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.log("Error:", error.message);
+        toast.error(error.message);
+      } else {
+        console.log("Unexpected error:", error);
+        toast.error("An unknown error occurred");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(()=>{
-    if(user.email.length > 0 && user.password.length >0 && user.username.length > 0){
-        setButtonDisabled(false)
-    }else{
-      setButtonDisabled(true)
+  useEffect(() => {
+    if (
+      user.email.length > 0 &&
+      user.password.length > 0 &&
+      user.username.length > 0
+    ) {
+      setButtonDisabled(false);
+    } else {
+      setButtonDisabled(true);
     }
-
-  },[user])
+  }, [user]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">

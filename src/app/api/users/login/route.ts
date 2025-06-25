@@ -2,8 +2,7 @@ import {connect} from "@/dbConfig/dbConfig";
 import User from "@/models/userModel"
 import { NextRequest,NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { error } from "console";
-import { use } from "react";
+
 import jwt from 'jsonwebtoken'
 
 
@@ -47,8 +46,8 @@ export async function POST(request:NextRequest) {
             // path:"/"
         })
         return response;
-    } catch (error:any) {
+    } catch (error) {
         console.log("Error :",error)
-        return NextResponse.json({error: error.message},{status:500})
+        return NextResponse.json({error: error},{status:500})
     }
 }
