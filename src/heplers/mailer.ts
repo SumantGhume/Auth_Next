@@ -18,7 +18,7 @@ export const sendEmail = async ({ email, emailType, userId }: SendEmailProps) =>
       emailType === "VERIFY"
         ? {
             verifyToken: hashedToken,
-            verifyTokenExpiry: Date.now() + 3600000,
+            verifyTokenExpiry: Date.now() + 3600000, // 1 hour
           }
         : {
             forgotPasswordToken: hashedToken,
@@ -39,7 +39,7 @@ export const sendEmail = async ({ email, emailType, userId }: SendEmailProps) =>
     const link = `${process.env.DOMAIN}/verifyemail?token=${hashedToken}`;
 
     const mailOptions = {
-      from: "sumantghume12@gmail.com",
+      from: "sumantgh@gmail.com",
       to: email,
       subject: emailType === "VERIFY" ? "Verify your email" : "Reset your password",
       html: `<p>Click <a href="${link}">here</a> to ${
